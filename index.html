@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Will you be my girlfriend, Penguin?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #ffe4ee;
+    --deep: #f48fb1;
+    --moon: #5c1632;
+    --blush: #c2185b;
+    --gold: #a8326a;
+    --whisper: rgba(92, 22, 50, 0.8);
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: max(1.5rem, env(safe-area-inset-top)) 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: clamp(1.15rem, 2.6vw, 1.35rem);
+    line-height: 1.6;
+    color: var(--moon);
+    background: radial-gradient(ellipse at 50% 25%, var(--night), var(--deep) 70%);
+    overflow-x: hidden;
+  }
+
+  #stars {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .stage {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 26rem);
+    text-align: center;
+  }
+
+  #letter {
+    min-height: 8em;
+    color: var(--whisper);
+  }
+
+  .caret::after {
+    content: "|";
+    margin-left: 2px;
+    color: var(--gold);
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  #ring {
+    display: block;
+    width: 96px;
+    height: auto;
+    margin: 1.25rem auto 0;
+    opacity: 0;
+    transform: translateY(-36px);
+  }
+  #ring.show {
+    animation: drop 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  @keyframes drop {
+    60% { transform: translateY(4px); opacity: 1; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .glint { animation: glint 2.4s ease-in-out infinite; }
+  @keyframes glint { 50% { opacity: 0.1; } }
+
+  #question {
+    margin-top: 1rem;
+    font-weight: 600;
+    font-size: clamp(2.2rem, 8vw, 3.1rem);
+    line-height: 1.1;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+  #question.show { opacity: 1; }
+
+  .actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    min-height: 3.4rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease, visibility 0.8s;
+  }
+  .actions.show { opacity: 1; visibility: visible; }
+
+  button {
+    font: inherit;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.7rem 1.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  #yes {
+    background: var(--blush);
+    color: #ffffff;
+    border: 0;
+    transform: scale(var(--grow, 1));
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  #no {
+    background: transparent;
+    color: var(--moon);
+    border: 1px solid rgba(92, 22, 50, 0.4);
+    font-weight: 500;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  button:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 4px;
+  }
+
+  #reply {
+    min-height: 1.6em;
+    margin-top: 1.5rem;
+    color: var(--gold);
+  }
+
+  .heart {
+    position: fixed;
+    pointer-events: none;
+    font-size: 1.5rem;
+    animation: rise 2.4s ease-out forwards;
+  }
+  @keyframes rise {
+    from { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    to {
+      transform: translate(calc(-50% + var(--dx)), calc(-50% - 45vh)) rotate(var(--r)) scale(1.2);
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    #ring.show { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="stars" aria-hidden="true"></canvas>
+
+<main class="stage">
+  <p id="letter" aria-live="polite"></p>
+
+  <svg id="ring" viewBox="0 0 120 120" aria-hidden="true">
+    <defs>
+      <linearGradient id="band" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#f3dca4"/>
+        <stop offset="1" stop-color="#b38748"/>
+      </linearGradient>
+      <linearGradient id="gem" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#e6f7fb"/>
+        <stop offset="1" stop-color="#8fcfe0"/>
+      </linearGradient>
+    </defs>
+    <circle cx="60" cy="74" r="32" fill="none" stroke="url(#band)" stroke-width="8"/>
+    <polygon points="60,18 73,33 60,46 47,33" fill="url(#gem)"/>
+    <polygon points="47,33 60,46 73,33 60,28" fill="#ffffff" opacity="0.25"/>
+    <circle class="glint" cx="84" cy="20" r="2.5" fill="#ffffff"/>
+  </svg>
+
+  <h1 id="question">Will you be my girlfriend, Penguin?</h1>
+
+  <div class="actions" id="actions">
+    <button id="yes" type="button">Yes</button>
+    <button id="no" type="button">No</button>
+  </div>
+
+  <p id="reply"></p>
+</main>
+
+<script>
+  // Edit the letter and the "No" replies here.
+  const LETTER = "Penguin, some days I forget how to say what I feel, so I am saying it as simply as I can. You turn ordinary days into the best part of my story. I want every chapter that comes next to have you in it.";
+  const NO_LINES = [
+    "Are you sure, Penguin?",
+    "Think about it one more time.",
+    "I will wait right here.",
+    "Please reconsider.",
+    "My heart is still hoping."
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const letter = $("letter"), ring = $("ring"), question = $("question");
+  const actions = $("actions"), yes = $("yes"), no = $("no"), reply = $("reply");
+  const canvas = $("stars"), ctx = canvas.getContext("2d");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // Starfield
+  let stars = [];
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const count = Math.min(160, Math.floor((innerWidth * innerHeight) / 7000));
+    stars = Array.from({ length: count }, () => ({
+      x: Math.random() * innerWidth,
+      y: Math.random() * innerHeight,
+      r: Math.random() * 1.3 + 0.3,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.01 + Math.random() * 0.02
+    }));
+  }
+  function drawStars() {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    ctx.fillStyle = "#ffffff";
+    for (const s of stars) {
+      s.phase += s.speed;
+      ctx.globalAlpha = 0.4 + Math.sin(s.phase) * 0.35;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    if (!reduce) requestAnimationFrame(drawStars);
+  }
+  window.addEventListener("resize", () => {
+    resize();
+    if (reduce) drawStars();
+  });
+  resize();
+  drawStars();
+
+  // Typewriter for the letter
+  function type(el, text, speed = 36) {
+    return new Promise((resolve) => {
+      let i = 0;
+      el.classList.add("caret");
+      (function tick() {
+        el.textContent = text.slice(0, ++i);
+        if (i < text.length) setTimeout(tick, speed);
+        else { el.classList.remove("caret"); resolve(); }
+      })();
+    });
+  }
+
+  // Intro sequence: letter, ring drops, question, buttons
+  async function intro() {
+    if (reduce) {
+      letter.textContent = LETTER;
+    } else {
+      await type(letter, LETTER);
+      await wait(400);
+    }
+    ring.classList.add("show");
+    await wait(reduce ? 0 : 1000);
+    question.classList.add("show");
+    await wait(reduce ? 0 : 600);
+    actions.classList.add("show");
+  }
+
+  // The "No" button runs away from the pointer and makes "Yes" grow
+  let nos = 0;
+  function dodge() {
+    nos++;
+    if (!reduce) {
+      const x = (Math.random() * 2 - 1) * 110;
+      const y = (Math.random() * 2 - 1) * 50;
+      no.style.transform = `translate(${x}px, ${y}px)`;
+    }
+    yes.style.setProperty("--grow", Math.min(1 + nos * 0.07, 1.5));
+    reply.textContent = NO_LINES[Math.min(nos - 1, NO_LINES.length - 1)];
+  }
+  no.addEventListener("pointerenter", dodge);
+  no.addEventListener("click", dodge);
+
+  // Yes: hearts burst out of the button
+  function burstHearts(count = 36) {
+    const r = yes.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    const colors = ["#c2185b", "#e91e63", "#ffffff", "#8e1b4f"];
+    for (let i = 0; i < count; i++) {
+      const h = document.createElement("span");
+      h.className = "heart";
+      h.textContent = "♥";
+      h.style.left = x + "px";
+      h.style.top = y + "px";
+      h.style.color = colors[i % colors.length];
+      h.style.setProperty("--dx", (Math.random() * 2 - 1) * 35 + "vw");
+      h.style.setProperty("--r", (Math.random() * 90 - 45) + "deg");
+      h.style.animationDelay = Math.random() * 0.25 + "s";
+      document.body.appendChild(h);
+      h.addEventListener("animationend", () => h.remove());
+    }
+  }
+
+  yes.addEventListener("click", () => {
+    actions.classList.remove("show");
+    ring.classList.add("show");
+    question.textContent = "Yes, Penguin!";
+    reply.textContent = "Forever starts today.";
+    if (!reduce) burstHearts();
+  });
+
+  intro();
+</script>
+</body>
+</html>
